@@ -11,6 +11,8 @@
 */
 
 use core::f64;
+use std::io;
+use std::io::Write;
 
 #[derive(Debug)]
 enum Token {
@@ -29,7 +31,7 @@ fn is_str_a_number(str: &str) -> bool {
     true
 }
 
-fn string_to_token(input_string: &str) -> Token {
+fn slice_to_token(input_string: &str) -> Token {
     if is_str_a_number(input_string) {
         Token::Operand(input_string.parse().unwrap())
     } else {
@@ -90,11 +92,63 @@ fn string_to_token(input_string: &str) -> Token {
     }
 }
 
-fn infix_to_postfix(input: String) -> Vec<Token> {
+fn string_to_token(input_string: String) -> Vec<Token> {
+    let char_vector: Vec<char> = input_string.chars().collect();
+    let mut token_vector = Vec::new();
+    let mut i = 0;
+    while i < char_vector.len() {
+        let mut j = i + 1;
+        if match char_vector.get(i) {
+            Some(i) => i,
+            None => &'.',
+        }
+        .is_digit(10)
+        {
+            let mut str = String::from(*char_vector.get(i).unwrap());
+            while match char_vector.get(j) {
+                Some(i) => i,
+                None => &'.',
+            }
+            .is_digit(10)
+            {
+                str.push(*char_vector.get(j).unwrap());
+                j += 1;
+            }
+            token_vector.push(slice_to_token(&str));
+        } else if match char_vector.get(i) {
+            Some(i) => i,
+            None => &'.',
+        }
+        .is_alphabetic()
+        {
+            let mut str = String::from(*char_vector.get(i).unwrap());
+            while match char_vector.get(j) {
+                Some(i) => i,
+                None => &'.',
+            }
+            .is_alphabetic()
+            {
+                str.push(*char_vector.get(j).unwrap());
+                j += 1;
+            }
+            token_vector.push(slice_to_token(&str));
+        } else {
+            token_vector.push(slice_to_token(&char_vector.get(i).unwrap().to_string()));
+        }
+        if j > i + 1 {
+            i = j;
+        } else {
+            i += 1;
+        }
+    }
+
+    token_vector
+}
+
+fn infix_to_postfix(infix: Vec<Token>) -> Vec<Token> {
     // Implementation of the "Shunting yard algorithm" from Edsger Dijkstra.
     // Seen at: https://en.wikipedia.org/wiki/Shunting_yard_algorithm
-    _ = input;
-    Vec::new()
+
 }
 
 fn compute(postfix: Vec<Token>) -> f64 {
@@ -104,8 +158,15 @@ fn compute(postfix: Vec<Token>) -> f64 {
 
 fn main() {
     // User input: to do
+    println!("Calculator by Elio Fiorentini.");
+    print!(">>> ");
+    io::stdout().flush().unwrap();
+
+    let mut user_input = String::new();
+    let _ = io::stdin().read_line(&mut user_input);
 
     // Tests:
+    /*
     println!("{:?}", string_to_token("3256"));
     println!("{:?}", string_to_token("0.6453"));
     println!("{:?}", string_to_token("pi"));
@@ -118,9 +179,10 @@ fn main() {
     println!("{:?}", string_to_token("⋅"));
     println!("{:?}", string_to_token("0,6453"));
     println!("{:?}", string_to_token("bonjour"));
+    */
 
-    let user_input = String::from("15+4/2*8");
-    let postfix_notation = infix_to_postfix(user_input);
+    // let user_input = String::from("15+4/2*8");
+    let postfix_notation = infix_to_postfix(string_to_token(user_input));
     let result = compute(postfix_notation);
 
     println!("{result}");
