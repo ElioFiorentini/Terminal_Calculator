@@ -1,13 +1,13 @@
 /*  Autor: Elio Fiorentini
-    Creation date: 11/11/2024
-    Last modification: 11/11/2024
+Creation date: 11/11/2024
+Last modification: 27/11/2024
 
-    Objective:
-    Building a fully fonctional and usable console calculator.
-    It must take a string in input and output
-    the result of the operation entered.
-    It must be able to compute math functions
-    such as sin, power, square root, etc...
+Objective:
+Building a fully fonctional and usable console calculator.
+It must take a string in input and output
+the result of the operation entered.
+It must be able to compute math functions
+such as sin, power, square root, etc...
 */
 
 use core::f64;
@@ -18,6 +18,8 @@ use std::io::Write;
 #[derive(Debug, Copy, Clone, PartialEq)]
 enum MathFunction {
     Pow,
+    Max,
+    Min,
     Sqrt,
     Exp,
     Log,
@@ -60,8 +62,11 @@ fn is_unary(token: &Token) -> bool {
 }
 
 fn is_str_a_number(str: &str) -> bool {
-    for char in str.chars() {
-        if !char.is_digit(10) && char != '.' {
+    for (i, char) in str.chars().enumerate() {
+        if char == '-' && i == 0 && str.len() < 2 {
+            return false;
+        }
+        if !char.is_digit(10) && char != '.' && char != '-' {
             return false;
         }
     }
@@ -160,7 +165,7 @@ fn is_function(f: &Token) -> bool {
 
 fn slice_to_token(input_string: &str) -> Token {
     if is_str_a_number(input_string) {
-        Token::Operand(input_string.parse().unwrap())
+        Token::Operand(input_string.trim().parse().unwrap())
     } else {
         match input_string {
             // Operators:
@@ -181,6 +186,9 @@ fn slice_to_token(input_string: &str) -> Token {
             "^" => Token::Function(MathFunction::Pow),
             "pow" => Token::Function(MathFunction::Pow),
             "power" => Token::Function(MathFunction::Pow),
+            // min/max
+            "max" => Token::Function(MathFunction::Max),
+            "min" => Token::Function(MathFunction::Min),
             // square root
             "sqrt" => Token::Function(MathFunction::Sqrt),
             "squareroot" => Token::Function(MathFunction::Sqrt),
@@ -233,12 +241,40 @@ fn string_to_token(input_string: String) -> Result<Vec<Token>, String> {
         }
         .is_digit(10)
         {
-            let mut str = String::from(*char_vector.get(i).unwrap());
+            let mut str = String::new(); //from(*char_vector.get(i).unwrap());
+            if i > 0
+                && match char_vector.get(i - 1) {
+                    Some(i) => i,
+                    None => &'\0',
+                } == &'-'
+            {
+                if i == 1 {
+                    _ = token_vector.pop();
+                    str.push('-');
+                } else if !(match char_vector.get(i - 2) {
+                    Some(i) => i,
+                    None => &'\0',
+                }
+                .is_digit(10)
+                    || match char_vector.get(i - 2) {
+                        Some(i) => i,
+                        None => &'\0',
+                    } == &')')
+                {
+                    _ = token_vector.pop();
+                    str.push('-');
+                }
+            }
+            str.push(*char_vector.get(i).unwrap());
             while match char_vector.get(j) {
                 Some(i) => i,
                 None => &'\0',
             }
             .is_digit(10)
+                || match char_vector.get(j) {
+                    Some(i) => i,
+                    None => &'\0',
+                } == &'.'
             {
                 str.push(*char_vector.get(j).unwrap());
                 j += 1;
@@ -326,7 +362,11 @@ fn infix_to_postfix(infix: Vec<Token>) -> Result<Vec<Token>, &'static str> {
             }
             Token::Ponctuation(p) => {
                 if *p == ',' {
-                    while *operator_stack.last().unwrap() != Token::Ponctuation('(') {
+                    while *match operator_stack.last() {
+                        Some(i) => i,
+                        None => return Err("Error: incorect use of ','."),
+                    } != Token::Ponctuation('(')
+                    {
                         output_queue.push_back(operator_stack.pop().unwrap());
                     }
                 } else if *p == '(' {
@@ -355,13 +395,113 @@ fn infix_to_postfix(infix: Vec<Token>) -> Result<Vec<Token>, &'static str> {
         }
         output_queue.push_back(operator_stack.pop().unwrap());
     }
-    println!("{:?}", output_queue);
     Ok(output_queue.into())
 }
 
-fn compute(postfix: Vec<Token>) -> f64 {
-    _ = postfix;
-    0.0
+fn compute(postfix: Vec<Token>) -> Result<f64, &'static str> {
+    let mut operand_stack = Vec::new();
+    for token in postfix {
+        match token {
+            Token::Operand(_) => operand_stack.push(token),
+            Token::None => {}
+            _ => {
+                if is_unary(&token) {
+                    let number: f64 = match match operand_stack.pop() {
+                        Some(i) => i,
+                        None => return Err("Error: missing operand."),
+                    } {
+                        Token::Operand(i) => i,
+                        _ => 0.0,
+                    };
+                    match token {
+                        Token::Function(MathFunction::Sqrt) => {
+                            operand_stack.push(Token::Operand(number.sqrt()));
+                        }
+                        Token::Function(MathFunction::Exp) => {
+                            operand_stack.push(Token::Operand(number.exp()));
+                        }
+                        Token::Function(MathFunction::Log) => {
+                            operand_stack.push(Token::Operand(number.log10()));
+                        }
+                        Token::Function(MathFunction::Ln) => {
+                            operand_stack.push(Token::Operand(number.ln()));
+                        }
+                        Token::Function(MathFunction::Abs) => {
+                            operand_stack.push(Token::Operand(number.abs()));
+                        }
+                        Token::Function(MathFunction::Floor) => {
+                            operand_stack.push(Token::Operand(number.floor()));
+                        }
+                        Token::Function(MathFunction::Sin) => {
+                            operand_stack.push(Token::Operand(number.sin()));
+                        }
+                        Token::Function(MathFunction::Cos) => {
+                            operand_stack.push(Token::Operand(number.cos()));
+                        }
+                        Token::Function(MathFunction::Tan) => {
+                            operand_stack.push(Token::Operand(number.tan()));
+                        }
+                        Token::Function(MathFunction::Asin) => {
+                            operand_stack.push(Token::Operand(number.asin()));
+                        }
+                        Token::Function(MathFunction::Acos) => {
+                            operand_stack.push(Token::Operand(number.acos()));
+                        }
+                        Token::Function(MathFunction::Atan) => {
+                            operand_stack.push(Token::Operand(number.atan()));
+                        }
+                        _ => {}
+                    }
+                } else {
+                    let number2: f64 = match match operand_stack.pop() {
+                        Some(i) => i,
+                        None => return Err("Error: missing operand."),
+                    } {
+                        Token::Operand(i) => i,
+                        _ => 0.0,
+                    };
+                    let number1: f64 = match match operand_stack.pop() {
+                        Some(i) => i,
+                        None => return Err("Error: missing operand."),
+                    } {
+                        Token::Operand(i) => i,
+                        _ => 0.0,
+                    };
+                    match token {
+                        Token::Operator('+') => {
+                            operand_stack.push(Token::Operand(number1 + number2));
+                        }
+                        Token::Operator('-') => {
+                            operand_stack.push(Token::Operand(number1 - number2));
+                        }
+                        Token::Operator('*') => {
+                            operand_stack.push(Token::Operand(number1 * number2));
+                        }
+                        Token::Operator('/') => {
+                            operand_stack.push(Token::Operand(number1 / number2));
+                        }
+                        Token::Operator('%') => {
+                            operand_stack.push(Token::Operand(number1 % number2));
+                        }
+                        Token::Function(MathFunction::Pow) => {
+                            operand_stack.push(Token::Operand(number1.powf(number2)));
+                        }
+                        Token::Function(MathFunction::Max) => {
+                            operand_stack.push(Token::Operand(number1.max(number2)));
+                        }
+                        Token::Function(MathFunction::Min) => {
+                            operand_stack.push(Token::Operand(number1.min(number2)));
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
+    }
+    match operand_stack.last().unwrap() {
+        Token::Operand(i) => Ok(*i),
+        _ => Err("Error: missing operand."),
+    }
 }
 
 fn main() {
@@ -405,8 +545,12 @@ fn main() {
                     Vec::new()
                 }
             };
-            let result = compute(postfix);
-            println!("{result}");
+            if !postfix.is_empty() {
+                match compute(postfix) {
+                    Ok(v) => println!("{}", v),
+                    Err(e) => eprintln!("{}", e),
+                };
+            }
         }
     }
 }
