@@ -41,6 +41,24 @@ enum Token {
     None,
 }
 
+fn is_unary(token: &Token) -> bool {
+    match token {
+        Token::Function(MathFunction::Sqrt) => true,
+        Token::Function(MathFunction::Exp) => true,
+        Token::Function(MathFunction::Log) => true,
+        Token::Function(MathFunction::Ln) => true,
+        Token::Function(MathFunction::Abs) => true,
+        Token::Function(MathFunction::Floor) => true,
+        Token::Function(MathFunction::Sin) => true,
+        Token::Function(MathFunction::Cos) => true,
+        Token::Function(MathFunction::Tan) => true,
+        Token::Function(MathFunction::Asin) => true,
+        Token::Function(MathFunction::Acos) => true,
+        Token::Function(MathFunction::Atan) => true,
+        _ => false,
+    }
+}
+
 fn is_str_a_number(str: &str) -> bool {
     for char in str.chars() {
         if !char.is_digit(10) && char != '.' {
@@ -48,121 +66,6 @@ fn is_str_a_number(str: &str) -> bool {
         }
     }
     true
-}
-
-fn slice_to_token(input_string: &str) -> Token {
-    if is_str_a_number(input_string) {
-        Token::Operand(input_string.parse().unwrap())
-    } else {
-        match input_string {
-            // Operators:
-            "+" => Token::Operator('+'),
-            "-" => Token::Operator('-'),
-            "−" => Token::Operator('-'),
-            "*" => Token::Operator('*'),
-            "x" => Token::Operator('*'),
-            "×" => Token::Operator('*'),
-            "⋅" => Token::Operator('*'),
-            "/" => Token::Operator('/'),
-            "÷" => Token::Operator('/'),
-            "%" => Token::Operator('%'),
-            "mod" => Token::Operator('%'),
-
-            // Functions:
-            // power
-            "^" => Token::Function(MathFunction::Pow),
-            "pow" => Token::Function(MathFunction::Pow),
-            "power" => Token::Function(MathFunction::Pow),
-            // square root
-            "sqrt" => Token::Function(MathFunction::Sqrt),
-            "squareroot" => Token::Function(MathFunction::Sqrt),
-            // exponential
-            "exp" => Token::Function(MathFunction::Exp),
-            "exponential" => Token::Function(MathFunction::Exp),
-            "e" => Token::Function(MathFunction::Exp),
-            // logarithm
-            "log" => Token::Function(MathFunction::Log),
-            "logarithm" => Token::Function(MathFunction::Log),
-            // natural logarithm
-            "ln" => Token::Function(MathFunction::Ln),
-            "naturallogarithm" => Token::Function(MathFunction::Ln),
-            "naturallog" => Token::Function(MathFunction::Ln),
-            // absolute value
-            "abs" => Token::Function(MathFunction::Abs),
-            "absolute" => Token::Function(MathFunction::Abs),
-            "absolutevalue" => Token::Function(MathFunction::Abs),
-            // floor
-            "floor" => Token::Function(MathFunction::Floor),
-            // trigonometry
-            "sin" => Token::Function(MathFunction::Sin),
-            "cos" => Token::Function(MathFunction::Cos),
-            "tan" => Token::Function(MathFunction::Tan),
-            "asin" => Token::Function(MathFunction::Asin),
-            "acos" => Token::Function(MathFunction::Acos),
-            "atan" => Token::Function(MathFunction::Atan),
-
-            // Others:
-            "pi" => Token::Operand(f64::consts::PI),
-            "π" => Token::Operand(f64::consts::PI),
-            "," => Token::Ponctuation(','),
-            "(" => Token::Ponctuation('('),
-            ")" => Token::Ponctuation(')'),
-            _ => Token::None,
-        }
-    }
-}
-
-fn string_to_token(input_string: String) -> Vec<Token> {
-    let char_vector: Vec<char> = input_string.chars().collect();
-    let mut token_vector = Vec::new();
-    let mut i = 0;
-    while i < char_vector.len() {
-        let mut j = i + 1;
-        if match char_vector.get(i) {
-            Some(i) => i,
-            None => &'.',
-        }
-        .is_digit(10)
-        {
-            let mut str = String::from(*char_vector.get(i).unwrap());
-            while match char_vector.get(j) {
-                Some(i) => i,
-                None => &'.',
-            }
-            .is_digit(10)
-            {
-                str.push(*char_vector.get(j).unwrap());
-                j += 1;
-            }
-            token_vector.push(slice_to_token(&str));
-        } else if match char_vector.get(i) {
-            Some(i) => i,
-            None => &'.',
-        }
-        .is_alphabetic()
-        {
-            let mut str = String::from(*char_vector.get(i).unwrap());
-            while match char_vector.get(j) {
-                Some(i) => i,
-                None => &'.',
-            }
-            .is_alphabetic()
-            {
-                str.push(*char_vector.get(j).unwrap());
-                j += 1;
-            }
-            token_vector.push(slice_to_token(&str));
-        } else {
-            token_vector.push(slice_to_token(&char_vector.get(i).unwrap().to_string()));
-        }
-        if j > i + 1 {
-            i = j;
-        } else {
-            i += 1;
-        }
-    }
-
-    token_vector
 }
 
 fn is_parenthesis(o: &Token) -> bool {
@@ -255,6 +158,146 @@ fn is_function(f: &Token) -> bool {
     }
 }
 
+fn slice_to_token(input_string: &str) -> Token {
+    if is_str_a_number(input_string) {
+        Token::Operand(input_string.parse().unwrap())
+    } else {
+        match input_string {
+            // Operators:
+            "+" => Token::Operator('+'),
+            "-" => Token::Operator('-'),
+            "−" => Token::Operator('-'),
+            "*" => Token::Operator('*'),
+            "x" => Token::Operator('*'),
+            "×" => Token::Operator('*'),
+            "⋅" => Token::Operator('*'),
+            "/" => Token::Operator('/'),
+            "÷" => Token::Operator('/'),
+            "%" => Token::Operator('%'),
+            "mod" => Token::Operator('%'),
+
+            // Functions:
+            // power
+            "^" => Token::Function(MathFunction::Pow),
+            "pow" => Token::Function(MathFunction::Pow),
+            "power" => Token::Function(MathFunction::Pow),
+            // square root
+            "sqrt" => Token::Function(MathFunction::Sqrt),
+            "squareroot" => Token::Function(MathFunction::Sqrt),
+            // exponential
+            "exp" => Token::Function(MathFunction::Exp),
+            "exponential" => Token::Function(MathFunction::Exp),
+            "e" => Token::Function(MathFunction::Exp),
+            // logarithm
+            "log" => Token::Function(MathFunction::Log),
+            "logarithm" => Token::Function(MathFunction::Log),
+            // natural logarithm
+            "ln" => Token::Function(MathFunction::Ln),
+            "naturallogarithm" => Token::Function(MathFunction::Ln),
+            "naturallog" => Token::Function(MathFunction::Ln),
+            // absolute value
+            "abs" => Token::Function(MathFunction::Abs),
+            "absolute" => Token::Function(MathFunction::Abs),
+            "absolutevalue" => Token::Function(MathFunction::Abs),
+            // floor
+            "floor" => Token::Function(MathFunction::Floor),
+            // trigonometry
+            "sin" => Token::Function(MathFunction::Sin),
+            "cos" => Token::Function(MathFunction::Cos),
+            "tan" => Token::Function(MathFunction::Tan),
+            "asin" => Token::Function(MathFunction::Asin),
+            "acos" => Token::Function(MathFunction::Acos),
+            "atan" => Token::Function(MathFunction::Atan),
+
+            // Others:
+            "pi" => Token::Operand(f64::consts::PI),
+            "π" => Token::Operand(f64::consts::PI),
+            "," => Token::Ponctuation(','),
+            "(" => Token::Ponctuation('('),
+            ")" => Token::Ponctuation(')'),
+            " " => Token::Ponctuation(' '),
+            _ => Token::None,
+        }
+    }
+}
+
+fn string_to_token(input_string: String) -> Result<Vec<Token>, String> {
+    let char_vector: Vec<char> = input_string.chars().collect();
+    let mut token_vector = Vec::new();
+    let mut i = 0;
+    while i < char_vector.len() {
+        let mut j = i + 1;
+        if match char_vector.get(i) {
+            Some(i) => i,
+            None => break,
+        }
+        .is_digit(10)
+        {
+            let mut str = String::from(*char_vector.get(i).unwrap());
+            while match char_vector.get(j) {
+                Some(i) => i,
+                None => &'\0',
+            }
+            .is_digit(10)
+            {
+                str.push(*char_vector.get(j).unwrap());
+                j += 1;
+            }
+            let token = match slice_to_token(&str) {
+                Token::None => {
+                    let err_message = String::from(format!("Unrecognized token \"{}\"", &str));
+                    return Err(err_message);
+                }
+                i => i,
+            };
+            token_vector.push(token);
+        } else if match char_vector.get(i) {
+            Some(i) => i,
+            None => break,
+        }
+        .is_alphabetic()
+        {
+            let mut str = String::from(*char_vector.get(i).unwrap());
+            while match char_vector.get(j) {
+                Some(i) => i,
+                None => &'\0',
+            }
+            .is_alphabetic()
+            {
+                str.push(*char_vector.get(j).unwrap());
+                j += 1;
+            }
+            let token = match slice_to_token(&str) {
+                Token::None => {
+                    let err_message = String::from(format!("Unrecognized token \"{}\"", &str));
+                    return Err(err_message);
+                }
+                i => i,
+            };
+            token_vector.push(token);
+        } else {
+            let token = match slice_to_token(&char_vector.get(i).unwrap().to_string()) {
+                Token::None => {
+                    let err_message = String::from(format!(
+                        "Unrecognized token \"{}\"",
+                        &char_vector.get(i).unwrap().to_string()
+                    ));
+                    return Err(err_message);
+                }
+                i => i,
+            };
+            token_vector.push(token);
+        }
+        if j > i + 1 {
+            i = j;
+        } else {
+            i += 1;
+        }
+    }
+
+    Ok(token_vector)
+}
+
 fn infix_to_postfix(infix: Vec<Token>) -> Result<Vec<Token>, &'static str> {
     // Implementation of the "Shunting yard algorithm" from Edsger Dijkstra.
     // Seen at: https://en.wikipedia.org/wiki/Shunting_yard_algorithm
@@ -267,15 +310,14 @@ fn infix_to_postfix(infix: Vec<Token>) -> Result<Vec<Token>, &'static str> {
             Token::Operand(n) => output_queue.push_back(Token::Operand(*n)),
             Token::Function(f) => operator_stack.push(Token::Function(*f)),
             Token::Operator(o1) => {
-                let o2 = match operator_stack.last() {
-                    Some(o2) => o2.clone(),
-                    None => Token::None,
-                };
-                while match o2 {
-                    Token::None => false,
-                    _ => true,
-                } && (takes_precedence(&o2, &Token::Operator(*o1))
-                    || (same_precedence(Token::Operator(*o1), o2)
+                while match operator_stack.last() {
+                    Some(i) => match i {
+                        Token::Ponctuation('(') => false,
+                        _ => true,
+                    },
+                    None => false,
+                } && (takes_precedence(operator_stack.last().unwrap(), &Token::Operator(*o1))
+                    || (same_precedence(Token::Operator(*o1), *operator_stack.last().unwrap())
                         && is_left_associative(&Token::Operator(*o1))))
                 {
                     output_queue.push_back(operator_stack.pop().unwrap());
@@ -288,16 +330,14 @@ fn infix_to_postfix(infix: Vec<Token>) -> Result<Vec<Token>, &'static str> {
                         output_queue.push_back(operator_stack.pop().unwrap());
                     }
                 } else if *p == '(' {
-                    operator_stack.push(Token::Operator(*p));
+                    operator_stack.push(Token::Ponctuation('('));
                 } else if *p == ')' {
                     while !operator_stack.is_empty()
                         && *operator_stack.last().unwrap() != Token::Ponctuation('(')
                     {
                         output_queue.push_back(operator_stack.pop().unwrap());
                     }
-                    if operator_stack.is_empty()
-                        || *operator_stack.last().unwrap() != Token::Ponctuation('(')
-                    {
+                    if operator_stack.is_empty() {
                         return Err("Error: unmatching parenthesis.");
                     }
                     let _ = operator_stack.pop();
@@ -325,39 +365,48 @@ fn compute(postfix: Vec<Token>) -> f64 {
 }
 
 fn main() {
-    // User input: to do
     println!("Calculator by Elio Fiorentini.");
-    print!(">>> ");
-    io::stdout().flush().unwrap();
+    loop {
+        print!(">>> ");
+        io::stdout().flush().unwrap();
 
-    let mut user_input = String::new();
-    let _ = io::stdin().read_line(&mut user_input);
+        let mut user_input = String::new();
+        let _ = io::stdin().read_line(&mut user_input);
 
-    // Tests:
-    /*
-    println!("{:?}", string_to_token("3256"));
-    println!("{:?}", string_to_token("0.6453"));
-    println!("{:?}", string_to_token("pi"));
-    println!("{:?}", string_to_token("pow"));
-    println!("{:?}", string_to_token("^"));
-    println!("{:?}", string_to_token("sqrt"));
-    println!("{:?}", string_to_token("+"));
-    println!("{:?}", string_to_token("mod"));
-    println!("{:?}", string_to_token("÷"));
-    println!("{:?}", string_to_token("⋅"));
-    println!("{:?}", string_to_token("0,6453"));
-    println!("{:?}", string_to_token("bonjour"));
-    */
+        let user_input = String::from(user_input.trim());
 
-    // let user_input = String::from("15+4/2*8");
-    let postfix_notation: Vec<Token> = match infix_to_postfix(string_to_token(user_input)) {
-        Ok(v) => v,
-        Err(e) => {
-            eprintln!("{}", e);
-            Vec::new()
+        let running = match &user_input[..] {
+            "quit()" => false,
+            "quit" => false,
+            "q" => false,
+            "stop()" => false,
+            "stop" => false,
+            "exit()" => false,
+            "exit" => false,
+            _ => true,
+        };
+        if !running {
+            println!("Exiting...");
+            break;
         }
-    };
-    let result = compute(postfix_notation);
 
-    println!("{result}");
+        let infix = match string_to_token(user_input) {
+            Ok(v) => v,
+            Err(e) => {
+                eprintln!("{}", e);
+                Vec::new()
+            }
+        };
+        if !infix.is_empty() {
+            let postfix: Vec<Token> = match infix_to_postfix(infix) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("{}", e);
+                    Vec::new()
+                }
+            };
+            let result = compute(postfix);
+            println!("{result}");
+        }
+    }
 }
