@@ -15,11 +15,28 @@ use std::collections::VecDeque;
 use std::io;
 use std::io::Write;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq)]
+enum MathFunction {
+    Pow,
+    Sqrt,
+    Exp,
+    Log,
+    Ln,
+    Abs,
+    Floor,
+    Sin,
+    Cos,
+    Tan,
+    Asin,
+    Acos,
+    Atan,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq)]
 enum Token {
     Operand(f64),
     Operator(char),
-    Function(String),
+    Function(MathFunction),
     Ponctuation(char),
     None,
 }
@@ -53,36 +70,36 @@ fn slice_to_token(input_string: &str) -> Token {
 
             // Functions:
             // power
-            "^" => Token::Function("pow".to_string()),
-            "pow" => Token::Function("pow".to_string()),
-            "power" => Token::Function("pow".to_string()),
+            "^" => Token::Function(MathFunction::Pow),
+            "pow" => Token::Function(MathFunction::Pow),
+            "power" => Token::Function(MathFunction::Pow),
             // square root
-            "sqrt" => Token::Function("sqrt".to_string()),
-            "squareroot" => Token::Function("sqrt".to_string()),
+            "sqrt" => Token::Function(MathFunction::Sqrt),
+            "squareroot" => Token::Function(MathFunction::Sqrt),
             // exponential
-            "exp" => Token::Function("exp".to_string()),
-            "exponential" => Token::Function("exp".to_string()),
-            "e" => Token::Function("exp".to_string()),
+            "exp" => Token::Function(MathFunction::Exp),
+            "exponential" => Token::Function(MathFunction::Exp),
+            "e" => Token::Function(MathFunction::Exp),
             // logarithm
-            "log" => Token::Function("log".to_string()),
-            "logarithm" => Token::Function("log".to_string()),
+            "log" => Token::Function(MathFunction::Log),
+            "logarithm" => Token::Function(MathFunction::Log),
             // natural logarithm
-            "ln" => Token::Function("ln".to_string()),
-            "naturallogarithm" => Token::Function("ln".to_string()),
-            "naturallog" => Token::Function("ln".to_string()),
+            "ln" => Token::Function(MathFunction::Ln),
+            "naturallogarithm" => Token::Function(MathFunction::Ln),
+            "naturallog" => Token::Function(MathFunction::Ln),
             // absolute value
-            "abs" => Token::Function("abs".to_string()),
-            "absolute" => Token::Function("abs".to_string()),
-            "absolutevalue" => Token::Function("abs".to_string()),
+            "abs" => Token::Function(MathFunction::Abs),
+            "absolute" => Token::Function(MathFunction::Abs),
+            "absolutevalue" => Token::Function(MathFunction::Abs),
             // floor
-            "floor" => Token::Function("floor".to_string()),
+            "floor" => Token::Function(MathFunction::Floor),
             // trigonometry
-            "sin" => Token::Function("sin".to_string()),
-            "cos" => Token::Function("cos".to_string()),
-            "tan" => Token::Function("tan".to_string()),
-            "asin" => Token::Function("asin".to_string()),
-            "acos" => Token::Function("acos".to_string()),
-            "atan" => Token::Function("atan".to_string()),
+            "sin" => Token::Function(MathFunction::Sin),
+            "cos" => Token::Function(MathFunction::Cos),
+            "tan" => Token::Function(MathFunction::Tan),
+            "asin" => Token::Function(MathFunction::Asin),
+            "acos" => Token::Function(MathFunction::Acos),
+            "atan" => Token::Function(MathFunction::Atan),
 
             // Others:
             "pi" => Token::Operand(f64::consts::PI),
@@ -148,62 +165,62 @@ fn string_to_token(input_string: String) -> Vec<Token> {
     token_vector
 }
 
-fn is_parenthesis(o: Token) -> bool {
-    if o == Token::Ponctuation('(') || o == Token::Ponctuation(')') {
+fn is_parenthesis(o: &Token) -> bool {
+    if *o == Token::Ponctuation('(') || *o == Token::Ponctuation(')') {
         true
     } else {
         false
     }
 }
 
-fn is_exponential(o: Token) -> bool {
-    if o == Token::Function("exp".to_string()) {
+fn is_exponential(o: &Token) -> bool {
+    if *o == Token::Function(MathFunction::Exp) {
         true
     } else {
         false
     }
 }
 
-fn is_mult_or_div(o: Token) -> bool {
-    if o == Token::Operator('*') || o == Token::Operator('/') || o == Token::Operator('%') {
+fn is_mult_or_div(o: &Token) -> bool {
+    if *o == Token::Operator('*') || *o == Token::Operator('/') || *o == Token::Operator('%') {
         true
     } else {
         false
     }
 }
 
-fn is_add_or_sub(o: Token) -> bool {
-    if o == Token::Operator('+') || o == Token::Operator('-') {
+fn is_add_or_sub(o: &Token) -> bool {
+    if *o == Token::Operator('+') || *o == Token::Operator('-') {
         true
     } else {
         false
     }
 }
 
-fn takes_precedence(o1: Token, o2: Token) -> bool {
+fn takes_precedence(o1: &Token, o2: &Token) -> bool {
     if o1 == o2 {
         return false;
     }
-    if is_parenthesis(o1) {
-        if is_parenthesis(o2) {
+    if is_parenthesis(&o1) {
+        if is_parenthesis(&o2) {
             return false;
         }
         return true;
     }
-    if is_exponential(o1) {
-        if is_parenthesis(o2) || is_exponential(o2) {
+    if is_exponential(&o1) {
+        if is_parenthesis(&o2) || is_exponential(&o2) {
             return false;
         }
         return true;
     }
-    if is_mult_or_div(o1) {
-        if is_parenthesis(o2) || is_exponential(o2) || is_mult_or_div(o2) {
+    if is_mult_or_div(&o1) {
+        if is_parenthesis(&o2) || is_exponential(&o2) || is_mult_or_div(&o2) {
             return false;
         }
         return true;
     }
-    if is_add_or_sub(o1) {
-        if is_parenthesis(o2) || is_exponential(o2) || is_mult_or_div(o2) || is_add_or_sub(o2) {
+    if is_add_or_sub(&o1) {
+        if is_parenthesis(&o2) || is_exponential(&o2) || is_mult_or_div(&o2) || is_add_or_sub(&o2) {
             return false;
         }
         return true;
@@ -212,10 +229,10 @@ fn takes_precedence(o1: Token, o2: Token) -> bool {
 }
 
 fn same_precedence(o1: Token, o2: Token) -> bool {
-    if (is_parenthesis(o1) && is_parenthesis(o2))
-        || (is_exponential(o1) && is_exponential(o2))
-        || (is_mult_or_div(o1) && is_mult_or_div(o2))
-        || (is_add_or_sub(o1) && is_add_or_sub(o2))
+    if (is_parenthesis(&o1) && is_parenthesis(&o2))
+        || (is_exponential(&o1) && is_exponential(&o2))
+        || (is_mult_or_div(&o1) && is_mult_or_div(&o2))
+        || (is_add_or_sub(&o1) && is_add_or_sub(&o2))
     {
         true
     } else {
@@ -223,15 +240,15 @@ fn same_precedence(o1: Token, o2: Token) -> bool {
     }
 }
 
-fn is_left_associative(o: Token) -> bool {
-    if o == Token::Function("pow".to_string()) {
+fn is_left_associative(o: &Token) -> bool {
+    if *o == Token::Function(MathFunction::Pow) {
         false
     } else {
         true
     }
 }
 
-fn is_function(f: Token) -> bool {
+fn is_function(f: &Token) -> bool {
     match f {
         Token::Function(_) => true,
         _ => false,
@@ -257,9 +274,9 @@ fn infix_to_postfix(infix: Vec<Token>) -> Result<Vec<Token>, &'static str> {
                 while match o2 {
                     Token::None => false,
                     _ => true,
-                } && (takes_precedence(o2, Token::Operator(*o1))
+                } && (takes_precedence(&o2, &Token::Operator(*o1))
                     || (same_precedence(Token::Operator(*o1), o2)
-                        && is_left_associative(Token::Operator(*o1))))
+                        && is_left_associative(&Token::Operator(*o1))))
                 {
                     output_queue.push_back(operator_stack.pop().unwrap());
                 }
@@ -284,7 +301,7 @@ fn infix_to_postfix(infix: Vec<Token>) -> Result<Vec<Token>, &'static str> {
                         return Err("Error: unmatching parenthesis.");
                     }
                     let _ = operator_stack.pop();
-                    if is_function(*operator_stack.last().unwrap()) {
+                    if is_function(operator_stack.last().unwrap()) {
                         output_queue.push_back(operator_stack.pop().unwrap());
                     }
                 }
@@ -293,7 +310,7 @@ fn infix_to_postfix(infix: Vec<Token>) -> Result<Vec<Token>, &'static str> {
         }
     }
     while !operator_stack.is_empty() {
-        if is_parenthesis(*operator_stack.last().unwrap()) {
+        if is_parenthesis(operator_stack.last().unwrap()) {
             return Err("Error: unmatching parenthesis.");
         }
         output_queue.push_back(operator_stack.pop().unwrap());
