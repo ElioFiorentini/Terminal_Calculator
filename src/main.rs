@@ -105,6 +105,33 @@ fn is_add_or_sub(o: &Token) -> bool {
     }
 }
 
+fn is_left_associative(o: &Token) -> bool {
+    if *o == Token::Function(MathFunction::Pow) {
+        false
+    } else {
+        true
+    }
+}
+
+fn is_function(f: &Token) -> bool {
+    match f {
+        Token::Function(_) => true,
+        _ => false,
+    }
+}
+
+fn same_precedence(o1: Token, o2: Token) -> bool {
+    if (is_parenthesis(&o1) && is_parenthesis(&o2))
+        || (is_exponential(&o1) && is_exponential(&o2))
+        || (is_mult_or_div(&o1) && is_mult_or_div(&o2))
+        || (is_add_or_sub(&o1) && is_add_or_sub(&o2))
+    {
+        true
+    } else {
+        false
+    }
+}
+
 fn takes_precedence(o1: &Token, o2: &Token) -> bool {
     if o1 == o2 {
         return false;
@@ -134,33 +161,6 @@ fn takes_precedence(o1: &Token, o2: &Token) -> bool {
         return true;
     }
     false
-}
-
-fn same_precedence(o1: Token, o2: Token) -> bool {
-    if (is_parenthesis(&o1) && is_parenthesis(&o2))
-        || (is_exponential(&o1) && is_exponential(&o2))
-        || (is_mult_or_div(&o1) && is_mult_or_div(&o2))
-        || (is_add_or_sub(&o1) && is_add_or_sub(&o2))
-    {
-        true
-    } else {
-        false
-    }
-}
-
-fn is_left_associative(o: &Token) -> bool {
-    if *o == Token::Function(MathFunction::Pow) {
-        false
-    } else {
-        true
-    }
-}
-
-fn is_function(f: &Token) -> bool {
-    match f {
-        Token::Function(_) => true,
-        _ => false,
-    }
 }
 
 fn slice_to_token(input_string: &str) -> Token {
