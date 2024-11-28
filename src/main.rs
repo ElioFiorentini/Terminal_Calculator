@@ -381,7 +381,10 @@ fn infix_to_postfix(infix: Vec<Token>) -> Result<Vec<Token>, &'static str> {
                         return Err("Error: unmatching parenthesis.");
                     }
                     let _ = operator_stack.pop();
-                    if is_function(operator_stack.last().unwrap()) {
+                    if is_function(match operator_stack.last() {
+                        Some(v) => v,
+                        None => &Token::None,
+                    }) {
                         output_queue.push_back(operator_stack.pop().unwrap());
                     }
                 }
