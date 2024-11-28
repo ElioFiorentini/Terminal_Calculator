@@ -501,6 +501,9 @@ fn compute(postfix: Vec<Token>) -> Result<f64, &'static str> {
             }
         }
     }
+    if operand_stack.len() > 1 {
+        return Err("Error: too much arguments.");
+    }
     match operand_stack.last().unwrap() {
         Token::Operand(i) => Ok(*i),
         _ => Err("Error: missing operand."),
